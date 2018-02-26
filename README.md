@@ -21,7 +21,8 @@ CarChain uses big data technology combined with blockchain to provide a decentra
 # Network
 ## Storage Network
 KVS (key value storage network)，类似HBase，可以用很低的成本获得大量储存空间。  
-数据字典表nameNode存放在主链里面，这样降低储存成本，又保证了数据安全和私密。当出现不一致的时候，要主网络进行判断和修正
+数据字典表nameNode存放在主链里面，这样降低储存成本，又保证了数据安全和私密。  
+当出现不一致的时候，要主网络进行判断和修正
 
 ## Block Chain
 基于POS proof of stake的网络，节约算力以加速交易验证。  
