@@ -8,7 +8,7 @@ CarChain uses big data technology combined with blockchain to provide a decentra
 设备初始化时链接网络，从认证手机钱包端获取公钥，并将其产生的数据加密传输到存储网络里。
 
 ## User Wallet
-自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证，也包括其他个人信息数据的授权。  
+自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证，也包括其他个人信息数据的授权。  
 在服务端请求数据使用时，从钱包设备发起确认
 
 # Currency
@@ -24,7 +24,7 @@ KVS (key value storage network)，类似HBase，可以用很低的成本获得�
 数据字典表nameNode存放在主链里面，这样降低储存成本，又保证了数据安全和私密。当出现不一致的时候，要主网络进行判断和修正
 
 ## Block Chain
-基于POS proof of stake的网络，节约算力以加速交易验证。  
+基于POS proof of stake的网络，节约算力以加速交易验证。  
 EVM虚拟机可执行服务商代码进行用户数据计算
 
 # Service Provider
