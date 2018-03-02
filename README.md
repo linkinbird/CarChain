@@ -20,7 +20,7 @@ putKV(VID, address, targetNode, agent, format="trip-gps", hashFunc,
 
 putKV(VID, address, targetNode, agent, format="carvio", hashFunc,
 		key= "VID_VIO_20180301194800",
-		value={"datetime":20180310,"viotype":"vioparking","price":200,"point":0})
+		value={"datetime":20180310,"loc":{"lat":31.250885,"lng":121.44662},"viotype":"vioparking","price":200,"point":0})
 ```
 
 
