@@ -1,10 +1,10 @@
 # CarChain
-IoT means so many things,they can't rely on single Architecture.
+IoT means so many things,they can't rely on single Architecture.  
 CarChain uses big data technology combined with blockchain to provide a decentralized solution for car network
 
 # Client
 ## IoT & IoC-internet of cars
-物联网设备端是主要的数据生产方，比如车机数据，车主手机端APP数据。
+物联网设备端是主要的数据生产方，比如车机数据，车主手机端APP数据。  
 设备初始化时链接网络，从认证手机钱包端获取公钥，并将其产生的数据加密传输到存储网络里。
 
 远程设置
@@ -25,7 +25,7 @@ putKV(VID, address, targetNode, agent, format="carvio", hashFunc,
 
 
 ## User Wallet
-自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证，也包括其他个人信息数据的授权。
+自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证，也包括其他个人信息数据的授权。  
 在服务端请求数据使用时，从钱包设备发起确认
 
 # Currency
