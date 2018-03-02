@@ -9,16 +9,16 @@ CarChain uses big data technology combined with blockchain to provide a decentra
 
 远程设置
 ```
-setup(VID, address, pubKey)				#远程初始化
-reset(VID, prvKey, address, pubKey)		#远程重置，需要验证上一次的秘钥
+setup(VID, address, pubKey,agent)			#远程初始化
+reset(VID, prvKey, address, pubKey,agent)		#远程重置，需要验证上一次的秘钥
 ```
-数据上报
+数据上报，直接模式或者代理节点模式（局域网）
 ```
-putKV(VID, address, targetNode, format="trip-gps", hashFunc,
+putKV(VID, address, targetNode, agent, format="trip-gps", hashFunc,
 		key= "VID_TRIPGPS_20180301194800",
 		value={"len":10,"gps":[{"lat":31.250885,"lng":121.44662},{"lat":31.251259,"lng":121.4456},{"lat":31.25419,"lng":121.485504},{"lat":31.268875,"lng":121.59015},{"lat":31.29777,"lng":121.61309},{"lat":31.298483,"lng":121.6138},{"lat":31.297743,"lng":121.614525},{"lat":31.194258,"lng":121.74957},{"lat":31.195974,"lng":121.75078},{"lat":31.115866,"lng":121.77829}]})
 
-putKV(VID, address, targetNode, format="carvio", hashFunc,
+putKV(VID, address, targetNode, agent, format="carvio", hashFunc,
 		key= "VID_VIO_20180301194800",
 		value={"datetime":20180310,"viotype":"vioparking"}
 ```
@@ -29,11 +29,21 @@ putKV(VID, address, targetNode, format="carvio", hashFunc,
 在服务端请求数据使用时，从钱包设备发起确认
 
 # Currency
-代币随着数据的产生而产生，设备共享储存，在消耗代币的同时获得代币，达到平衡
-* 个人用户无成本使用，大额消耗额外支付
-* 开发者提供存储和计算获得额外代币
-* 服务商使用用户数据也支付代币
-  - 最后用户支付使用TP服务时，价值还是在用户和商家间交换
+没有ICO，代币与数据紧密联系，但也留给社区运作和激励的空间
+### 第一阶段 50%代币
+* 每个IoT节点或者初始代币，以支持启动交易
+* 代币随着数据的产生而产生，数据生产方按照数据量支付给数据存储和计算方（矿工）
+* 中央储备同时将等额的代币发到数据生产方账户，保持客户端账户平衡，而代币逐渐向服务方转移
+* 50%额度发完为止
+
+### 第二阶段 大额预取 30%
+代理人模式的代理节点，按照贡献算力或者数据，批量获得一定代币，以鼓励大玩家加入
+该阶段和第一阶段可同步进行，不冲突
+
+###第三阶段 自由流通 20%
+服务商开始大量进场，针对服务商销售代币，以激励服务流通
+最终服务商完成服务后，用服务利润覆盖数据采购的代币成本
+销售所得代币部分用作开发者社区激励
 
 # Network
 ## Storage Network
