@@ -25,7 +25,7 @@ putKV(VID, address, targetNode, agent, format="carvio", hashFunc,
 
 
 ## User Wallet
-自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证，也包括其他个人信息数据的授权。  
+自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证，也包括其他个人信息数据的授权。
 在服务端请求数据使用时，从钱包设备发起确认
 
 # Currency
