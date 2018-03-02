@@ -1,10 +1,10 @@
 # CarChain
-IoT means so many things,they can't rely on single Architecture.
+IoT means so many things,they can't rely on single Architecture.  
 CarChain uses big data technology combined with blockchain to provide a decentralized solution for car network
 
 # Client
 ## IoT & IoC-internet of cars
-物联网设备端是主要的数据生产方，比如车机数据，车主手机端APP数据。
+物联网设备端是主要的数据生产方，比如车机数据，车主手机端APP数据。  
 设备初始化时链接网络，从认证手机钱包端获取公钥，并将其产生的数据加密传输到存储网络里。
 
 远程设置
@@ -25,7 +25,7 @@ putKV(VID, address, targetNode, agent, format="carvio", hashFunc,
 
 
 ## User Wallet
-自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证，也包括其他个人信息数据的授权。
+自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证，也包括其他个人信息数据的授权。  
 在服务端请求数据使用时，从钱包设备发起确认
 
 # Currency
@@ -37,22 +37,22 @@ putKV(VID, address, targetNode, agent, format="carvio", hashFunc,
 * 50%额度发完为止
 
 ### 第二阶段 大额预取 30%
-代理人模式的代理节点，按照贡献算力或者数据，批量获得一定代币，以鼓励大玩家加入
+代理人模式的代理节点，按照贡献算力或者数据，批量获得一定代币，以鼓励大玩家加入  
 该阶段和第一阶段可同步进行，不冲突
 
 ### 第三阶段 自由流通 20%
-服务商开始大量进场，针对服务商销售代币，以激励服务流通
-最终服务商完成服务后，用服务利润覆盖数据采购的代币成本
+服务商开始大量进场，针对服务商销售代币，以激励服务流通  
+最终服务商完成服务后，用服务利润覆盖数据采购的代币成本  
 销售所得代币部分用作开发者社区激励
 
 # Network
 ## Storage Network
-KVS (key value storage network)，类似HBase，可以用很低的成本获得大量储存空间。
-数据字典表nameNode存放在主链里面，这样降低储存成本，又保证了数据安全和私密。
+KVS (key value storage network)，类似HBase，可以用很低的成本获得大量储存空间。  
+数据字典表nameNode存放在主链里面，这样降低储存成本，又保证了数据安全和私密。  
 当出现不一致的时候，要主网络进行判断和修正
 
 ## Block Chain
-基于POS proof of stake的网络，节约算力以加速交易验证。
+基于POS proof of stake的网络，节约算力以加速交易验证。  
 EVM虚拟机可执行服务商代码进行用户数据计算
 
 # Service Provider
