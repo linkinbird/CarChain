@@ -4,27 +4,28 @@ CarChain uses big data technology combined with blockchain to provide a decentra
 
 # Client
 ## IoT & IoC-internet of cars
-物联网设备端是主要的数据生产方，比如车机数据，车主手机端APP数据。  
-设备初始化时链接网络，从认证手机钱包端获取公钥，并将其产生的数据加密传输到存储网络里。
+物联网设备端是主要的数据生产方，比如车机数据，车主手机端APP数据。
 
-远程设置，VID是设备的编码，绑定后自动生成address是区块链中的地址，可以1对多，加强隐私
+* 生产方数据采用RSA加密，设备初始化时链接网络，VID是设备的编码
+* 从认证手机钱包端获取公钥，并将其产生的数据加密传输到存储网络里
+* 数据交易使用ECC加密签名，所以数据权地址用比特币的address
 ```
-setup(VID, address, pubKey,agent)			#远程初始化
+setup(VID, BTCaddress, RSApubKey,agent)			#远程初始化
   {check ownership
    create transaction with address
    sync with blockchain}
-setDup(VID, pubKey)					#克隆多个虚拟地址保护隐私
+setDup(VID, BTCaddress, RSApubKey)					#克隆多个虚拟地址保护隐私
   {return addresses
    sync with user wallet}
-reset(VID, prvKey, address, pubKey,agent)		#远程重置，需要验证上一次的秘钥
+reset(VID, BTCpubKey, BTCaddress, BTCsign,agent)		#远程重置，需要验证上一次的公钥和私钥签名
 ```
 数据上报，直接模式或者代理节点模式（局域网），key上报到区块链交易（address+key不重复），value加密后放在KVS集群。公开参数可以不包含format，通过key的ID名称判断数据类目，具体编码形式在value里，这样安全性高，但也可以包含format，易于管理
 ```
-putIotKV(randomFrom(addresses), address, pubKey, targetNode, agent, hashFunc
+putIotKV(randomFrom(BTCaddresses), RSApubKey, targetNode, agent, hashFunc
 		, key= {"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
 		, value={"len":10,"GPS":[{"lat":31.250885,"lng":121.44662},{"lat":31.251259,"lng":121.4456},{"lat":31.25419,"lng":121.485504},{"lat":31.268875,"lng":121.59015},{"lat":31.29777,"lng":121.61309},{"lat":31.298483,"lng":121.6138},{"lat":31.297743,"lng":121.614525},{"lat":31.194258,"lng":121.74957},{"lat":31.195974,"lng":121.75078},{"lat":31.115866,"lng":121.77829}],"SPEED":"0,23,52,45,51,33,49,49,48,37","VEHICLE_DATA":1,"format"="trip-gps"})
 
-putIotKV(randomFrom(addresses), address, pubKey, targetNode, agent, hashFunc
+putIotKV(randomFrom(BTCaddresses), RSApubKey, targetNode, agent, hashFunc
 		, key= {"CARVIO_ID":1}
 		, value={"format":"carvio", "VEHICLE_DATA":1, "datetime":20180310,"loc":{"lat":31.250885,"lng":121.44662},"viotype":"vioparking","price":200,"point":0})
 ```
@@ -32,9 +33,18 @@ putIotKV(randomFrom(addresses), address, pubKey, targetNode, agent, hashFunc
 
 ## User Wallet
 自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证(远程setup)  
+维护的秘钥包括： 
+* ECC的秘钥对
+	- 私钥用来签名交易
+	- 公钥用来验证收货
+	- address地址由公钥哈希取得，是对外的收货地址，可以生成多个
+* RSA的秘钥对
+	- 私钥用来解码数据
+	- 公钥用来发送给IoT设备，加密数据
+
 其他个人信息数据也用类似方式授权，直接从钱包端上传。这里必须上传数据格式，因为钱包端数据类型较多，而且支持手工编辑。
 ```
-putWalKV(address, pubKey, format="VIN_CODE", hashFunc
+putWalKV(BTCaddress, RSApubKey, format="VIN_CODE", hashFunc
 		,key={"VEHICLE_DATA":1}, value={"VIN":"LBVNU79049SB81546")
 ```
 在服务端请求数据使用时，也从钱包设备发起确认。所以有两个管理列表：
@@ -45,29 +55,31 @@ putWalKV(address, pubKey, format="VIN_CODE", hashFunc
     - get到的value中一般也有VID信息，解码后可以二次校验
   - 设备当前在线状态，不论是否在线都可以通过address和Key从KVS查询到密文数据段
   - ```
-    getKV(address, prvKey, hashFunc, format="trip-gps"
+    getKV(BTCaddress, RSAprvKey, hashFunc, format="trip-gps"
     , key={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
     , columns=["VEHICLE_DATA", "GPS", "SPEED"])
     ```
     - 也可以拉取批量数据
     - ```
-      getKVRange(addresses, prvKey, hashFunc, format="trip-gps"
+      getKVRange(BTCaddresses, RSAprvKey, hashFunc, format="trip-gps"
       , start={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
       , end={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":"INF_MAX"}
       , columns=["VEHICLE_DATA", "GPS", "SPEED"])
       ```
 2. 数据授权列表
   - 数据所有权交易，一般卖方所有权也保留，买方可以二次交易
+    - A先按照比特币协议签名和认证pubKey，然后用RSA私钥解码，再用B的RSA公钥加密，授权到B的address
     - ```
-      send(addressA, prvKey, addressB, pubKey,resell=TRUE, dup=TRUE)
+      send(BTCaddressA, BTCpubKeyA, BTCsignA, RSAprvKeyA, BTCaddressB, RSApubKeyB, resell=TRUE, dup=TRUE)
       ```
   - 数据使用权交易
     - 基于智能合约的撮合交易，原始数据不泄露，EVM返回计算结果
+
+    - 也需要双方的address以及RSA秘钥来加密接收计算结果
+
     - ```
-      SMcontract(addressA, prvKey, pubKeyA, addressB, pubKeyB, smartContract...)
+      SMcontract(BTCaddressA, BTCpubKeyA, BTCsignA, RSAprvKeyA, BTCaddressB, RSApubKeyB, smartContract...)
       ```
-
-
 
 # Currency
 没有ICO，代币与数据紧密联系，但也留给社区运作和激励的空间
