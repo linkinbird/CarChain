@@ -14,10 +14,10 @@ setup(VID, BTCaddress, RSApubKey,agent)			#远程初始化
   {check ownership
    create transaction with address
    sync with blockchain}
-setDup(VID, BTCaddress, RSApubKey)					#克隆多个虚拟地址保护隐私
+setDup(VID, BTCaddress, RSApubKey)			#克隆多个虚拟地址保护隐私
   {return addresses
    sync with user wallet}
-reset(VID, BTCpubKey, BTCaddress, BTCsign,agent)		#远程重置，需要验证上一次的公钥和私钥签名
+reset(VID, BTCpubKey, BTCaddress, BTCsign,agent)	#远程重置，需要验证上一次的公钥和私钥签名
 ```
 数据上报，直接模式或者代理节点模式（局域网），key上报到区块链交易（address+key不重复），value加密后放在KVS集群。公开参数可以不包含format，通过key的ID名称判断数据类目，具体编码形式在value里，这样安全性高，但也可以包含format，易于管理
 ```
