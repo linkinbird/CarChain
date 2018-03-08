@@ -117,8 +117,11 @@ KVS (key value storage network)，类似HBase，可以用很低的成本获得�
 ## Block Chain
 ### 共识机制
 基于POS proof of stake的网络，也需要进一步上层改造以提升算力和加速交易验证。
-* sharding 分组式共识
-* IOTA 的DAG 排队式共识
+* sharding 分组式共识，用于数据上报
+	- 在数据上报这种不需要回溯所有历史的事件类型里，Loi Luu的sharding方案是可行的
+* IOTA 的DAG 排队式共识，用户数据交易
+	- 任然需要每个节点都储存全量交易历史
+	- 懒惰节点的处理要再研究
 
 ### 执行机制
 EVM虚拟机可执行服务商代码进行用户数据计算，效率也需要提升
