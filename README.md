@@ -19,13 +19,19 @@ setDup(VID, BTCaddress, RSApubKey)			#克隆多个虚拟地址保护隐私
    sync with user wallet}
 reset(VID, BTCpubKey, BTCaddress, BTCsign,agent)	#远程重置，需要验证上一次的公钥和私钥签名
 ```
-数据上报，直接模式或者代理节点模式（局域网），key上报到区块链交易（address+key不重复），value加密后放在KVS集群。公开参数可以不包含format，通过key的ID名称判断数据类目，具体编码形式在value里，这样安全性高，但也可以包含format，易于管理
+数据上报根据 address+key上报到区块链认证（不重复），value加密后放在KVS集群
+* 数据格式可以选择性公开
+	- 默认标准一般根据Key和ID的名称可以直接判断，具体编码细节在解码后的value里
+	- 自定义标准的建议在put参数里携带format信息
+* 代理模式： 品牌方自建代理网络，或者从原本局域网改造
+* 地址池： 为了加强隐私，同一辆车(VID)可以和用户约定一组地址池
+	- 常见选池方式可以用日期为seed，这样取数据时可以从数据日期反推出address地址
 ```
-putIotKV(randomFrom(BTCaddresses), RSApubKey, targetNode, agent, hashFunc
+putIotKV(randomFrom(BTCaddresses, date), RSApubKey, agentNode, hashFunc, format
 		, key= {"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
 		, value={"len":10,"GPS":[{"lat":31.250885,"lng":121.44662},{"lat":31.251259,"lng":121.4456},{"lat":31.25419,"lng":121.485504},{"lat":31.268875,"lng":121.59015},{"lat":31.29777,"lng":121.61309},{"lat":31.298483,"lng":121.6138},{"lat":31.297743,"lng":121.614525},{"lat":31.194258,"lng":121.74957},{"lat":31.195974,"lng":121.75078},{"lat":31.115866,"lng":121.77829}],"SPEED":"0,23,52,45,51,33,49,49,48,37","VEHICLE_DATA":1,"format"="trip-gps"})
 
-putIotKV(randomFrom(BTCaddresses), RSApubKey, targetNode, agent, hashFunc
+putIotKV(randomFrom(BTCaddresses, date), RSApubKey, agentNode, hashFunc, format
 		, key= {"CARVIO_ID":1}
 		, value={"format":"carvio", "VEHICLE_DATA":1, "datetime":20180310,"loc":{"lat":31.250885,"lng":121.44662},"viotype":"vioparking","price":200,"point":0})
 ```
@@ -51,17 +57,18 @@ putWalKV(BTCaddress, RSApubKey, format="VIN_CODE", hashFunc
 
 1. 设备列表
   - 拥有密钥对的设备，以及对这些设备的设置或重置操作
-    - 每个设备会随机多个地址上报数据，上报地址和VID的对应在钱包端储存
+    - 每个设备会随机多个地址池上报数据，上报地址池和VID对应在钱包端储存
+    - 取单个数据时，根据数据生成时间，可以推演出地址池中的具体地址
     - get到的value中一般也有VID信息，解码后可以二次校验
   - 设备当前在线状态，不论是否在线都可以通过address和Key从KVS查询到密文数据段
   - ```
-    getKV(BTCaddress, RSAprvKey, hashFunc, format="trip-gps"
+    getKV(deductFrom(BTCaddresses, date), RSAprvKey, hashFunc, format="trip-gps"
     , key={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
     , columns=["VEHICLE_DATA", "GPS", "SPEED"])
     ```
-    - 也可以拉取批量数据
-    - ```
-      getKVRange(BTCaddresses, RSAprvKey, hashFunc, format="trip-gps"
+  - 也可以拉取批量数据
+  - ```
+      getKVRange(deductFrom(BTCaddresses, date), RSAprvKey, hashFunc, format="trip-gps"
       , start={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
       , end={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":"INF_MAX"}
       , columns=["VEHICLE_DATA", "GPS", "SPEED"])
@@ -105,8 +112,15 @@ KVS (key value storage network)，类似HBase，可以用很低的成本获得�
 当出现不一致的时候，要主网络进行判断和修正
 
 ## Block Chain
-基于POS proof of stake的网络，节约算力以加速交易验证。  
-EVM虚拟机可执行服务商代码进行用户数据计算
+### 共识机制
+基于POS proof of stake的网络，也需要进一步上层改造以提升算力和加速交易验证。
+* sharding 分组式共识
+* IOTA 的DAG 排队式共识
+
+### 执行机制
+EVM虚拟机可执行服务商代码进行用户数据计算，效率也需要提升
+* sharding 分组执行
+* spark 算法分布式
 
 # Service Provider
 ## Platform
