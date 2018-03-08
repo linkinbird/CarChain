@@ -25,13 +25,15 @@ reset(VID, BTCpubKey, BTCaddress, BTCsign,agent)	#远程重置，需要验证上
 	- 自定义标准的建议在put参数里携带format信息
 * 代理模式： 品牌方自建代理网络，或者从原本局域网改造
 * 地址池： 为了加强隐私，同一辆车(VID)可以和用户约定一组地址池
-	- 常见选池方式可以用日期为seed，这样取数据时可以从数据日期反推出address地址
+  - 常见选池方式可以用日期+用户共用seed（仅双方知道，不公开）来随机抽样
+  - userSeed可以简单的从pubKey或者prvKey变换而来
+  - 这样取数据时也可以从数据日期反推出address地址
 ```
-putIotKV(randomFrom(BTCaddresses, date), RSApubKey, agentNode, hashFunc, format
+putIotKV(randomFrom(BTCaddresses, date, userSeed), RSApubKey, agentNode, hashFunc, format
 		, key= {"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
 		, value={"len":10,"GPS":[{"lat":31.250885,"lng":121.44662},{"lat":31.251259,"lng":121.4456},{"lat":31.25419,"lng":121.485504},{"lat":31.268875,"lng":121.59015},{"lat":31.29777,"lng":121.61309},{"lat":31.298483,"lng":121.6138},{"lat":31.297743,"lng":121.614525},{"lat":31.194258,"lng":121.74957},{"lat":31.195974,"lng":121.75078},{"lat":31.115866,"lng":121.77829}],"SPEED":"0,23,52,45,51,33,49,49,48,37","VEHICLE_DATA":1,"format"="trip-gps"})
 
-putIotKV(randomFrom(BTCaddresses, date), RSApubKey, agentNode, hashFunc, format
+putIotKV(randomFrom(BTCaddresses, date, userSeed), RSApubKey, agentNode, hashFunc, format
 		, key= {"CARVIO_ID":1}
 		, value={"format":"carvio", "VEHICLE_DATA":1, "datetime":20180310,"loc":{"lat":31.250885,"lng":121.44662},"viotype":"vioparking","price":200,"point":0})
 ```
@@ -41,9 +43,10 @@ putIotKV(randomFrom(BTCaddresses, date), RSApubKey, agentNode, hashFunc, format
 自然人用户注册设备钱包，在端侧生成seed，发送公钥给IoT设备来管理认证(远程setup)  
 维护的秘钥包括： 
 * ECC的秘钥对
-	- 私钥用来签名交易
-	- 公钥用来验证收货
-	- address地址由公钥哈希取得，是对外的收货地址，可以生成多个
+  - 私钥用来签名交易
+  - 公钥用来验证收货
+  - addresses地址池由公钥哈希取得，是对外的收货地址，可以生成多个
+    - address Seed，由公钥或者私钥变化而来
 * RSA的秘钥对
 	- 私钥用来解码数据
 	- 公钥用来发送给IoT设备，加密数据
@@ -62,13 +65,13 @@ putWalKV(BTCaddress, RSApubKey, format="VIN_CODE", hashFunc
     - get到的value中一般也有VID信息，解码后可以二次校验
   - 设备当前在线状态，不论是否在线都可以通过address和Key从KVS查询到密文数据段
   - ```
-    getKV(deductFrom(BTCaddresses, date), RSAprvKey, hashFunc, format="trip-gps"
+    getKV(deductFrom(BTCaddresses, date, userSeed), RSAprvKey, hashFunc, format="trip-gps"
     , key={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
     , columns=["VEHICLE_DATA", "GPS", "SPEED"])
     ```
   - 也可以拉取批量数据
   - ```
-      getKVRange(deductFrom(BTCaddresses, date), RSAprvKey, hashFunc, format="trip-gps"
+      getKVRange(deductFrom(BTCaddresses, date, userSeed), RSAprvKey, hashFunc, format="trip-gps"
       , start={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
       , end={"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":"INF_MAX"}
       , columns=["VEHICLE_DATA", "GPS", "SPEED"])
