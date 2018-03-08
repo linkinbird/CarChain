@@ -9,6 +9,7 @@ CarChain uses big data technology combined with blockchain to provide a decentra
 * 生产方数据采用RSA加密，设备初始化时链接网络，VID是设备的编码
 * 从认证手机钱包端获取公钥，并将其产生的数据加密传输到存储网络里
 * 数据交易使用ECC加密签名，所以数据权地址用比特币的address
+* 数据哈希dHash验证也传到公开网络，以便数据授权的时候验证
 ```
 setup(VID, BTCaddress, RSApubKey,agent)			#远程初始化
   {check ownership
@@ -31,11 +32,13 @@ reset(VID, BTCpubKey, BTCaddress, BTCsign,agent)	#远程重置，需要验证上
 ```
 putIotKV(randomFrom(BTCaddresses, date, userSeed), RSApubKey, agentNode, hashFunc, format
 		, key= {"SESSION_ID":1, "START_TIME":20160511071428, "END_TIME":20160511094623}
-		, value={"len":10,"GPS":[{"lat":31.250885,"lng":121.44662},{"lat":31.251259,"lng":121.4456},{"lat":31.25419,"lng":121.485504},{"lat":31.268875,"lng":121.59015},{"lat":31.29777,"lng":121.61309},{"lat":31.298483,"lng":121.6138},{"lat":31.297743,"lng":121.614525},{"lat":31.194258,"lng":121.74957},{"lat":31.195974,"lng":121.75078},{"lat":31.115866,"lng":121.77829}],"SPEED":"0,23,52,45,51,33,49,49,48,37","VEHICLE_DATA":1,"format"="trip-gps"})
+		, value={"len":10,"GPS":[{"lat":31.250885,"lng":121.44662},{"lat":31.251259,"lng":121.4456},{"lat":31.25419,"lng":121.485504},{"lat":31.268875,"lng":121.59015},{"lat":31.29777,"lng":121.61309},{"lat":31.298483,"lng":121.6138},{"lat":31.297743,"lng":121.614525},{"lat":31.194258,"lng":121.74957},{"lat":31.195974,"lng":121.75078},{"lat":31.115866,"lng":121.77829}],"SPEED":"0,23,52,45,51,33,49,49,48,37","VEHICLE_DATA":1,"format"="trip-gps"}
+		, dHash="...")
 
 putIotKV(randomFrom(BTCaddresses, date, userSeed), RSApubKey, agentNode, hashFunc, format
 		, key= {"CARVIO_ID":1}
-		, value={"format":"carvio", "VEHICLE_DATA":1, "datetime":20180310,"loc":{"lat":31.250885,"lng":121.44662},"viotype":"vioparking","price":200,"point":0})
+		, value={"format":"carvio", "VEHICLE_DATA":1, "datetime":20180310,"loc":{"lat":31.250885,"lng":121.44662},"viotype":"vioparking","price":200,"point":0}
+		, dHash="...")
 ```
 
 
@@ -54,7 +57,7 @@ putIotKV(randomFrom(BTCaddresses, date, userSeed), RSApubKey, agentNode, hashFun
 其他个人信息数据也用类似方式授权，直接从钱包端上传。这里必须上传数据格式，因为钱包端数据类型较多，而且支持手工编辑。
 ```
 putWalKV(BTCaddress, RSApubKey, format="VIN_CODE", hashFunc
-		,key={"VEHICLE_DATA":1}, value={"VIN":"LBVNU79049SB81546")
+		,key={"VEHICLE_DATA":1}, value={"VIN":"LBVNU79049SB81546", dHash)
 ```
 在服务端请求数据使用时，也从钱包设备发起确认。所以有两个管理列表：
 
@@ -78,9 +81,9 @@ putWalKV(BTCaddress, RSApubKey, format="VIN_CODE", hashFunc
       ```
 2. 数据授权列表
   - 数据所有权交易，一般卖方所有权也保留，买方可以二次交易
-    - A先按照比特币协议签名和认证pubKey，然后用RSA私钥解码，再用B的RSA公钥加密，授权到B的address
+    - A先按照比特币协议签名和认证pubKey，然后用RSA私钥解码，经过dHashA确认是当时的数据，再用B的RSA公钥加密，授权到B的address
     - ```
-      send(BTCaddressA, BTCpubKeyA, BTCsignA, RSAprvKeyA, BTCaddressB, RSApubKeyB, resell=TRUE, dup=TRUE)
+      send(BTCaddressA, BTCpubKeyA, BTCsignA, RSAprvKeyA, dHashA, BTCaddressB, RSApubKeyB, resell=TRUE, dup=TRUE)
       ```
   - 数据使用权交易
     - 基于智能合约的撮合交易，原始数据不泄露，EVM返回计算结果
@@ -88,7 +91,7 @@ putWalKV(BTCaddress, RSApubKey, format="VIN_CODE", hashFunc
     - 也需要双方的address以及RSA秘钥来加密接收计算结果
 
     - ```
-      SMcontract(BTCaddressA, BTCpubKeyA, BTCsignA, RSAprvKeyA, BTCaddressB, RSApubKeyB, smartContract...)
+      SMcontract(BTCaddressA, BTCpubKeyA, BTCsignA, RSAprvKeyA, dHashA, BTCaddressB, RSApubKeyB, smartContract...)
       ```
 
 # Currency
@@ -113,6 +116,17 @@ putWalKV(BTCaddress, RSApubKey, format="VIN_CODE", hashFunc
 KVS (key value storage network)，类似HBase，可以用很低的成本获得大量储存空间。  
 数据字典表nameNode存放在主链里面，这样降低储存成本，又保证了数据安全和私密。  
 当出现不一致的时候，要主网络进行判断和修正
+* 数据的存储有手续费，但是共享模式下可以减免
+* 数据的读取按照遍历address的数量计费，避免刷库
+
+Address作为分块键，用户可以快速查找行程列表，而他人遍历成本过高
+* 用户通过和设备协商的地址池，可以按天遍历行程
+	- 也就是按反推的address地址，遍历每个分块的key
+	- 成本只有一次address的费用
+* 其他人无法预知address的选取方式，如果遍历成本会很高
+  - 比如要遍历某一天的所有行程，等于要遍历所有address
+  - 当地址池足够大，车辆数足够多，这个遍历可能要10亿次循环(1000个地址池，100万辆车)，导致成本过高
+  - 即使通过ip等方式关联了这1000个地址池，因为没有日期对应的seed，所以还是要付出1000倍的成本
 
 ## Block Chain
 ### 共识机制
@@ -121,7 +135,7 @@ KVS (key value storage network)，类似HBase，可以用很低的成本获得�
 	- 在数据上报这种不需要回溯所有历史的事件类型里，Loi Luu的sharding方案是可行的
 * IOTA 的DAG 排队式共识，用户数据交易
 	- 任然需要每个节点都储存全量交易历史
-	- 懒惰节点的处理要再研究
+	- 懒惰节点的处理要再研究，很多车辆会长时间不在线或者网络连接不好
 
 ### 执行机制
 EVM虚拟机可执行服务商代码进行用户数据计算，效率也需要提升
@@ -134,6 +148,13 @@ EVM虚拟机可执行服务商代码进行用户数据计算，效率也需要�
 * 如果用户方发起需求，直接支付到该账号，关联上数据在EVM执行
 * 如果服务方发起或者双方撮合，可以服务商支付到自己的地址，同时请求用户的数据授权
 * 交易确认后在区块链网络里执行
+
+## Auditor
+用户端的数据，只有用户有全貌，在给服务商提供数据时存在数据完整性的问题，所以需要有审核方。数据交易的ledger经过数据提供方，和数据审核方的二次确认，方可完成
+* 轨迹数据是分散在多个address的，所以在服务方使用前，需要核实累计里程
+* 违章数据是从交警系统里获得的，可以验证MD5
+* 出险和维修数据在保险公司
+* 维修保养在4S店，但是个体维修点很可能无法核实
 
 ## Application
 ### Wallet 应用包
