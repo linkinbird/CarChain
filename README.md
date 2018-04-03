@@ -140,8 +140,11 @@ Address作为分块键，数据的读取按照遍历address的数量计费。用
 * 基本应用从网络get数据（做展示）并支付手续费
 
 第二阶段做类似hyperledger的交易撮合，这里涉及到下单，消息通道，状态记录等等问题
-* 数据输出方自己应该通过dHash确认给出的数据准确
-* 但如果输出方恶意篡改，能否使用zkSNARKs让矿工进行Zero-Knowledge Proofs在不屑露原始数据的情况下，验证数据的dHash准确性
+* 为防止输出方恶意篡改，使用[zkSNARKs](https://media.consensys.net/introduction-to-zksnarks-with-examples-3283b554fc3b)让矿工进行Zero-Knowledge Proofs在不泄露原始数据的情况下，验证数据的dHash准确性
+  - zk proof 输出方有解密后的原文，及正确生成了dHash
+  - zk proof 交易金额
+  - zk proof RSA是用正确数据和公钥加密的，及正确生成了给接收方的密文
+* 数据获取方自己再进行一次dHash的验证
 
 ### 共识机制
 基于POS proof of stake的网络，也需要进一步上层改造以提升算力和加速交易验证。
