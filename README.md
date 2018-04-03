@@ -25,6 +25,8 @@ reset(VID, BTCpubKey, BTCaddress, BTCsign,agent)	#远程重置，需要验证上
 	- 默认标准一般根据Key和ID的名称可以直接判断，具体编码细节在解码后的value里
 	- 自定义标准的建议在put参数里携带format信息
 * 代理模式： 品牌方自建代理网络，或者从原本局域网改造
+* 订阅通道：由钱包授权的同步订阅通道，可以同时受到用通道公钥加密的数据
+  - 通道可以只存在一个，订阅用户用类似IOTA的sideKey解码
 * 地址池： 为了加强隐私，同一辆车(VID)可以和用户约定一组地址池
   - 常见选池方式可以用日期+用户共用seed（仅双方知道，不公开）来随机抽样
   - userSeed可以简单的从pubKey或者prvKey变换而来
@@ -93,6 +95,9 @@ putWalKV(BTCaddress, RSApubKey, format="VIN_CODE", hashFunc
     - ```
       SMcontract(BTCaddressA, BTCpubKeyA, BTCsignA, RSAprvKeyA, dHashA, BTCaddressB, RSApubKeyB, smartContract...)
       ```
+  - 带金额的数据交易智能合约
+    - 协议发起方式比较类似
+    - 但是协议执行过程比较复杂，在区块链/交易板块详述
 
 # Currency
 没有ICO，代币与数据紧密联系，但也留给社区运作和激励的空间
@@ -135,16 +140,26 @@ Address作为分块键，数据的读取按照遍历address的数量计费。用
 ## Block Chain
 ### 交易机制
 第一阶段是基本的代币生成和转移交易：
-* 中央储备给IoT设备充值
+* 中央储备给IoT设备充值，无法交易，只能支付手续费
 * IoT设备生成数据，put到网络并支付手续费
 * 基本应用从网络get数据（做展示）并支付手续费
 
-第二阶段做类似hyperledger的交易撮合，这里涉及到下单，消息通道，状态记录等等问题
-* 为防止输出方恶意篡改，使用[zkSNARKs](https://media.consensys.net/introduction-to-zksnarks-with-examples-3283b554fc3b)让矿工进行Zero-Knowledge Proofs在不泄露原始数据的情况下，验证数据的dHash准确性
-  - zk proof 输出方有解密后的原文，及正确生成了dHash
-  - zk proof 交易金额
-  - zk proof RSA是用正确数据和公钥加密的，及正确生成了给接收方的密文
-* 数据获取方自己再进行一次dHash的验证
+第二阶段做类似hyperledger的交易撮合，这里涉及到下单，消息通道，状态记录等等问题。为防止交易双方的恶意行为，使用[zkSNARKs](https://media.consensys.net/introduction-to-zksnarks-with-examples-3283b554fc3b)让矿工进行Zero-Knowledge Proofs在不泄露原始数据的情况下，验证数据准确性
+1. 交易金额由双方确认，共同签名，以确认交易意愿
+  - 数据提供方A，接收方和资金提供方B
+  - 启动智能合约，B的资金转移到合约地址下，并根据下面验证流程进行自动分配
+1. 输出方A提供原文RSA加密给B，由接收方B通过dHash确认，并签名
+  - 如果签名成功，执行资金转移
+  - 如果B不承认接收，可能A没给，也可能B收到了不承认，就需要A和矿工C先进行zk proof(RSA应该不需要验证)
+  - C创建验证数据对，A计算dHash的prf值，C验证prf
+    - 如果C验证失败，说明A没有数据，交易终止，B资金退回
+    - 如果C验证成功，说明A确实拥有原文，A再一次传递数据给B
+    - 如果B仍然没收到，C投票选择中间节点验证原文，执行资金操作
+      - 这里A没有作恶动机，因为资金已经确认，如果要反悔交易应该在数据传递之前反悔
+      - 这里B没有作恶动机，因为资金会被强制转移，如果数据通过C中间节点泄露，对B的采购价值有折损，除非B报复性采购并公开数据。但这也有更加简单直接的做法。
+1. B把接收的RSA加密数据提交到KVS网络
+  - C区块链确保dHash一致
+  - B自己会保证密文结果一致，否则该数据他也无法使用
 
 ### 共识机制
 基于POS proof of stake的网络，也需要进一步上层改造以提升算力和加速交易验证。
