@@ -1,0 +1,34 @@
+环境准备
+从零开始搭建Qtum私链(network=regtest)，部署在两个节点上；
+分别创建账户zhangtao,jingjing
+
+./c1.sh getnewaddress  zhangtao
+qS1ZmEkbioqavuoPXa9dVt1sZdrSyNqRFf
+cNgQVojZeLHVZwafwQDm79SsTsHy3j2nammtUnfy1o7K62AATgk1
+--------------------------------------------------------------------
+./c2.sh getnewaddress jingjing
+qJGMN79DPGXhKaRiuSyPFu7D1ZPHcFV4Qz
+
+./c2.sh dumpprivkey qJGMN79DPGXhKaRiuSyPFu7D1ZPHcFV4Qz
+cQxknbfVX5kEqC8ZEZbUCrmzU2iQz2bigeQc7UhmoSPskm8LBRkC
+
+手工在zhangtao的地上挖矿
+./c1.sh generatetoaddress  1  qS1ZmEkbioqavuoPXa9dVt1sZdrSyNqRFf
+发现本网络下，挖一个块，会得到10000个QTUM的reward；
+
+问题1：bad-txns-premature-spend-of-coinbase
+在本地下载qtum-web-wallet项目，修libs/nodes/insight.js中的“testnet”的domain变量指向的是自己刚刚搭建的私网，运行
+cnpm run dev
+就起来了WEB钱包；
+
+以私钥的方式导入zhangtao这个账户；尝试给 qJGMN79DPGXhKaRiuSyPFu7D1ZPHcFV4Qz这个地址转账1QTUM；
+
+发现转账失败；
+报错是：  data: '16: bad-txns-premature-spend-of-coinbase. Code:-26' } }
+此错误的解释是： 使用了的未成熟的UTXO，
+                       Attempt to spend a coinbase at depth too low
+            因为一个账户上就算有qtum，也不能立即使用，要等到持有该Qtum的块往后继续增长500个块之后，才能解禁投入使用。
+
+解决办法就是：先手工挖500个块；之后就不再报此错了。
+          
+问题2：mandatory-script-verify-flag-failed
